@@ -24,23 +24,22 @@ EOF
 export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --border --height 20 --min-height 5 --layout reverse"
 function match {
   target_project=$1
-  target=$(grep -iPR "${target_project}" ${cache})
-  tarray=()
-  if [[ $(wc -l <<<${target}) > 1 ]]; then
-    sel=$(fzf --border --height 20 <<< ${target} | awk '{print $NF}')
-    gcloud config set project ${sel}
+  target=$(grep -iPR "${target_project}" "${cache}")
+  if [[ $(wc -l <<<"${target}") -gt 1 ]]; then
+    sel=$(fzf --border --height 20 <<< "${target}" | awk '{print $NF}')
+    gcloud config set project "${sel}"
     echo "--- ${sel} ---"
     echo "${sel}" > ~/.cache/current-project
   else
-    echo "--- $(awk '{print $NF}' <<< ${target}) ---"
-    gcloud config set project $(awk '{print $NF}' <<< ${target})
-    echo "$(awk '{print $NF}' <<< ${target})" > ~/.cache/current-project
+    echo "--- $(awk '{print $NF}' <<< "${target}") ---"
+    gcloud config set project "$(awk '{print $NF}' <<< "${target}")"
+    awk '{print $NF}' <<< "${target}" > ~/.cache/current-project
   fi
 }
 
 function blankmatch {
   sel=$(fzf --border --height 20 < ~/.cache/project-list | awk '{print $NF}')
-  gcloud config set project ${sel}
+  gcloud config set project "${sel}"
   echo "--- ${sel} ---"
   echo "${sel}" > ~/.cache/current-project
 }
@@ -53,15 +52,15 @@ if [[ ! -f ~/.cache/project-list ]]; then
   refresh
 fi
 
-if [[ -z ${1} ]]; then
+if [[ -z "${1}" ]]; then
   #gcloud config get-value project
   blankmatch
 else
-  case ${1} in 
+  case "${1}" in 
     help ) help;;
     refresh ) refresh;; 
     list ) cat ~/.cache/project-list;;
     current ) cat ~/.cache/current-project;;
-    * ) match $1
+    * ) match "${1}" ;;
   esac
 fi
