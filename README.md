@@ -12,3 +12,12 @@ Google cloud project switcher.
 `gsp` - list and select from all
 
 `gsp <project id>` - filter based on grep
+
+--- 
+
+## new stuff
+
+This stuff may not completely work yet, or will probably change soon:
+
+`gsp -c <string>` - best efforts config switching
+
