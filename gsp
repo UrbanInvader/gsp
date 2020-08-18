@@ -64,6 +64,7 @@ function configs {
   else
     gcloud config configurations activate "${configs}"
   fi 
+  refresh
 }
 
 if [[ ! -f ~/.cache/project-list ]]; then
