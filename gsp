@@ -10,6 +10,9 @@ if [[ ! $(fzf --version) ]]; then
   exit 1
 fi
 
+active_config=$(<$HOME/.config/gcloud/active_config)
+current_project=$(awk -F " = " '/project/{print $2}' "$HOME/.config/gcloud/configurations/config_${active_config}")
+
 cache=~/.cache/project-list
 
 function help {
@@ -29,23 +32,38 @@ function match {
     sel=$(fzf --border --height 20 <<< "${target}" | awk '{print $NF}')
     gcloud config set project "${sel}"
     echo "--- ${sel} ---"
-    echo "${sel}" > ~/.cache/current-project
   else
     echo "--- $(awk '{print $NF}' <<< "${target}") ---"
     gcloud config set project "$(awk '{print $NF}' <<< "${target}")"
-    awk '{print $NF}' <<< "${target}" > ~/.cache/current-project
   fi
 }
 
 function blankmatch {
-  sel=$(fzf --border --height 20 < ~/.cache/project-list | awk '{print $NF}')
+  sel=$(fzf < ~/.cache/project-list | awk '{print $NF}')
   gcloud config set project "${sel}"
   echo "--- ${sel} ---"
-  echo "${sel}" > ~/.cache/current-project
 }
 
 function refresh {
   echo "refreshing project list..."; gcloud projects list --format="[list,no-heading](name,project_id)" > /tmp/project-list && cp /tmp/project-list ~/.cache/project-list
+}
+
+function configs {
+  if [[ -z "${1}" ]]; then
+    echo "${active_config}"
+    exit
+  else
+    configs=$(gcloud config configurations list --format="[no-heading](name)" --filter="name ~ ${1}")
+  fi
+  if [[ "${configs}" == "" ]]; then 
+    echo "no match"
+    exit
+  fi
+  if [[ $(wc -l <<< "${configs}") -gt 1 ]]; then
+    gcloud config configurations activate $(fzf <<< "${configs}")
+  else
+    gcloud config configurations activate "${configs}"
+  fi 
 }
 
 if [[ ! -f ~/.cache/project-list ]]; then
@@ -60,7 +78,8 @@ else
     help ) help;;
     refresh ) refresh;; 
     list ) cat ~/.cache/project-list;;
-    current ) cat ~/.cache/current-project;;
+    current ) echo "${current_project}";;
+    -c ) configs "${2}";;
     * ) match "${1}" ;;
   esac
 fi
